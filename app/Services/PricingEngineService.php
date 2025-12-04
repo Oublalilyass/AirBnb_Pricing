@@ -9,64 +9,26 @@ use Carbon\Carbon;
 
 class PricingEngineService
 {
-    public function calculateListingPrices(Listing $listing, int $days = 30)
+    public function calculateOptimalPrice(Listing $listing)
     {
-        $prices = [];
-        $today = Carbon::today();
+        $competitors = $listing->competitors;
+        $market = MarketStat::where('city', $listing->city)
+            ->where('month', now()->month)
+            ->first();
 
-        for ($i = 0; $i < $days; $i++) {
-            $date = $today->copy()->addDays($i);
-            $price = $listing->base_price;
+        $basePrice = $listing->base_price;
 
-            // Apply Pricing Rules
-            foreach ($listing->pricingRules as $rule) {
-                if ($rule->start_date && $rule->end_date) {
-                    if ($date->lt($rule->start_date) || $date->gt($rule->end_date)) continue;
-                }
+        $competitorAvg = $competitors->avg('price');
+        $occupancyFactor = $market->avg_occupancy / 100;
 
-                if ($rule->value_type === 'percentage') {
-                    $price += $price * ($rule->value / 100);
-                } else {
-                    $price += $rule->value;
-                }
-            }
+        $optimal = ($competitorAvg * 0.6) +
+                   ($basePrice * 0.2) +
+                   ($market->avg_price * 0.2);
 
-            // Apply Event Boosts
-            $events = Event::where('start_date', '<=', $date)
-                           ->where('end_date', '>=', $date)
-                           ->get();
-            foreach ($events as $event) {
-                $price += $price * ($event->price_multiplier / 100);
-            }
-
-            // Apply Weekend Boost
-            if ($date->isWeekend()) {
-                $weekendRule = $listing->pricingRules->where('rule_type', 'weekend')->first();
-                if ($weekendRule) {
-                    $price += $weekendRule->value_type === 'percentage'
-                        ? $price * ($weekendRule->value / 100)
-                        : $weekendRule->value;
-                }
-            }
-
-            // Ensure min/max
-            if ($listing->min_price && $price < $listing->min_price) $price = $listing->min_price;
-            if ($listing->max_price && $price > $listing->max_price) $price = $listing->max_price;
-
-            // Save to database
-            $calendarPrice = CalendarPrice::updateOrCreate(
-                [
-                    'listing_id' => $listing->id,
-                    'date' => $date->format('Y-m-d')
-                ],
-                [
-                    'calculated_price' => round($price)
-                ]
-            );
-
-            $prices[] = $calendarPrice;
+        if ($occupancyFactor > 0.8) {
+            $optimal *= 1.15;
         }
 
-        return $prices;
+        return round($optimal, 2);
     }
 }

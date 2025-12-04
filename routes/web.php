@@ -12,6 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ---- LISTINGS ----
     Route::get('/listings', [ListingController::class, 'index']);
+    Route::get('/listings/create', [ListingController::class, 'create'])->name('listings.create');
     Route::post('/listings', [ListingController::class, 'store']);
     Route::get('/listings/{listing}', [ListingController::class, 'show']);
     Route::put('/listings/{listing}', [ListingController::class, 'update']);
@@ -30,6 +31,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pricing-rules/{pricingRule}', [PricingRuleController::class, 'show']);
     Route::put('/pricing-rules/{pricingRule}', [PricingRuleController::class, 'update']);
     Route::delete('/pricing-rules/{pricingRule}', [PricingRuleController::class, 'destroy']);
+
+    Route::get('/listings/{listing}/analytics',[ListingController::class, 'analytics']);
+
 });
 
 Route::get('/', function () {

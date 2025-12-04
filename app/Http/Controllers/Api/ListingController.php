@@ -9,6 +9,7 @@ use App\Models\Listing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\HasApiTokens;
+use Inertia\Inertia;
 
 
 
@@ -22,30 +23,53 @@ class ListingController extends Controller
     // }
     public function index()
     {
-        $user = auth()->user(); 
-        $listings = Listing::with('pricingRules', 'calendarPrices')->get();
-        return response()->json($listings);
-    }
+        $listings = Listing::with('pricingRules', 'calendarPrices')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
+        return Inertia::render('listings/Index', [
+            'listings' => $listings,
+        ]);
+    }
+    public function create()
+    {
+        return Inertia::render('listings/Form');
+    }
 
     public function show(Listing $listing)
     {
         // $this->authorize('view', $listing);
-        return response()->json($listing->load('pricingRules'));
+        // return response()->json($listing->load('pricingRules'));
+        return Inertia::render('listings/Show', [
+            'listing' => $listing->load('pricingRules'),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'base_price' => 'required|integer',
-            'min_price' => 'nullable|integer',
-            'max_price' => 'nullable|integer',
-        ]);
+        try {
+            \Log::info('Store method called', ['user' => auth()->id()]);
 
-        $listing = auth()->user()->listings()->create($data);
-        return response()->json($listing, 201);
+            $data = $request->validate([
+                'name' => 'required|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'base_price' => 'required|integer',
+                'min_price' => 'nullable|integer',
+                'max_price' => 'nullable|integer',
+            ]);
+
+            if (!auth()->check()) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+
+            $listing = auth()->user()->listings()->create($data);
+
+            return redirect('/listings')
+                ->with('success', 'Listing created successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Error creating listing: ' . $e->getMessage());
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     public function update(Request $request, Listing $listing)
@@ -62,6 +86,15 @@ class ListingController extends Controller
         $listing->update($data);
         return response()->json($listing);
     }
+    public function analytics(Listing $listing)
+    {
+        return inertia('Listings/Analytics', [
+            'listing' => $listing,
+            'competitors' => $listing->competitors,
+            'recommendedPrices' => $listing->recommendedPrices,
+        ]);
+    }
+
 
     public function destroy(Listing $listing)
     {

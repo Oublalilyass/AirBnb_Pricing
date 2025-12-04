@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,5 +32,14 @@ class Listing extends Model
     public function calendarPrices()
     {
         return $this->hasMany(CalendarPrice::class);
+    }
+    public function competitors()
+    {
+        return $this->hasMany(Competitor::class);
+    }
+
+    public function recommendedPrices()
+    {
+        return $this->hasMany(RecommendedPrice::class);
     }
 }
