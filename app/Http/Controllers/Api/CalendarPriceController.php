@@ -22,10 +22,10 @@ class CalendarPriceController extends Controller
     {
         $query = CalendarPrice::with('listing')
             ->whereHas('listing', function ($q) {
-                $q->where('user_id', auth()->id()); // User sees only their listings
+                $q->where('user_id', auth()->id());
             });
 
-        // Optional filters
+        // Filters
         if ($request->listing_id) {
             $query->where('listing_id', $request->listing_id);
         }
@@ -40,8 +40,16 @@ class CalendarPriceController extends Controller
 
         $prices = $query->orderBy('date', 'asc')->paginate(30);
 
-        return response()->json($prices);
+        return inertia('CalendarPrices/Index', [
+            'prices' => $prices,
+            'filters' => [
+                'listing_id' => $request->listing_id,
+                'start_date' => $request->start_date,
+                'end_date'   => $request->end_date,
+            ]
+        ]);
     }
+
 
     /**
      * Show a single calendar price
@@ -65,7 +73,7 @@ class CalendarPriceController extends Controller
         $request->validate([
             'listing_id'      => 'required|exists:listings,id',
             'date'            => 'required|date',
-            'calculated_price'=> 'required|numeric|min:1',
+            'calculated_price' => 'required|numeric|min:1',
         ]);
 
         // Ensure the listing belongs to authenticated user
@@ -76,7 +84,7 @@ class CalendarPriceController extends Controller
         $price = CalendarPrice::create([
             'listing_id'      => $listing->id,
             'date'            => $request->date,
-            'calculated_price'=> $request->calculated_price,
+            'calculated_price' => $request->calculated_price,
         ]);
 
         return response()->json([

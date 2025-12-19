@@ -6,9 +6,14 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\Api\ListingController;
 use App\Http\Controllers\Api\CalendarPriceController;
 use App\Http\Controllers\Api\PricingRuleController;
+// use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DashboardController;
 
-
+// Route::get('/dashboard', [DashboardController::class, 'index']);
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashborad 
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     // ---- LISTINGS ----
     Route::get('/listings', [ListingController::class, 'index']);
@@ -32,8 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/pricing-rules/{pricingRule}', [PricingRuleController::class, 'update']);
     Route::delete('/pricing-rules/{pricingRule}', [PricingRuleController::class, 'destroy']);
 
-    Route::get('/listings/{listing}/analytics',[ListingController::class, 'analytics']);
-
+    Route::get('/listings/{listing}/analytics', [ListingController::class, 'analytics']);
 });
 
 Route::get('/', function () {
@@ -44,8 +48,8 @@ Route::get('/', function () {
 
 
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('dashboard', function () {
+//     return Inertia::render('Dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';

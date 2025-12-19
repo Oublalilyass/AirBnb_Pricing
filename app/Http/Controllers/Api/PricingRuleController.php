@@ -17,14 +17,18 @@ class PricingRuleController extends Controller
     /**
      * List pricing rules for current user
      */
-    public function index(Request $request)
+    public function index()
     {
-        $rules = PricingRule::where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $rules = PricingRule::with('listing')
+            ->whereHas('listing', fn($q) => $q->where('user_id', auth()->id()))
+            ->orderBy('id', 'desc')
+            ->get();
 
-        return response()->json($rules);
+        return inertia('listings/PricingRules', [
+            'pricingRules' => $rules
+        ]);
     }
+
 
     /**
      * Show single pricing rule

@@ -36,6 +36,9 @@ import type { BreadcrumbItem, NavItem } from '@/types';
 import { InertiaLinkProps, Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { route } from 'ziggy-js';
+
+
 
 interface Props {
     breadcrumbs?: BreadcrumbItem[];
@@ -60,14 +63,13 @@ const activeItemStyles = computed(
             : '',
 );
 
-const mainNavItems: NavItem[] = [
+const mainNavItems = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: route('dashboard'),
         icon: LayoutGrid,
     },
 ];
-
 const rightNavItems: NavItem[] = [
     {
         title: 'Repository',
