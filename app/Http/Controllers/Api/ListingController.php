@@ -26,7 +26,6 @@ class ListingController extends Controller
         $listings = Listing::with('pricingRules', 'calendarPrices')
             ->orderBy('created_at', 'desc')
             ->get();
-
         return Inertia::render('listings/Index', [
             'listings' => $listings,
         ]);

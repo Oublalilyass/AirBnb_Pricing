@@ -2,8 +2,7 @@ import '../css/app.css'
 
 import { createInertiaApp } from '@inertiajs/vue3'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
-import { createApp, h } from 'vue'
-import type { DefineComponent } from 'vue'
+import { createApp, h, type DefineComponent } from 'vue'
 import { initializeTheme } from './composables/useAppearance'
 import { ZiggyVue } from 'ziggy-js'
 
@@ -21,7 +20,6 @@ createInertiaApp({
   setup({ el, App, props, plugin }) {
     createApp({ render: () => h(App, props) })
       .use(plugin)
-      // ✅ THIS IS THE FIX
       .use(ZiggyVue, props.initialPage.props.ziggy)
       .mount(el)
   },
