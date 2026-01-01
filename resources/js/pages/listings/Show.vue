@@ -1,20 +1,21 @@
 <script setup>
-import { ArrowLeftIcon, MapPinIcon, CurrencyDollarIcon } from "@heroicons/vue/24/outline";
+import { ArrowLeftIcon, MapPinIcon, CurrencyDollarIcon, SparklesIcon } from "@heroicons/vue/24/outline";
 import { Link } from "@inertiajs/vue3";
 
 const props = defineProps({
   listing: Object,
+  recommended_price: Number,
+  pricing_date: String,
 });
 </script>
+
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Back Button -->
-      <button
-        @click="$inertia.visit('/listings')"
-        class="inline-flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mb-6 group"
-      >
+      <button @click="$inertia.visit('/listings')"
+        class="inline-flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mb-6 group">
         <ArrowLeftIcon class="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
         <span class="font-medium">Back to Listings</span>
       </button>
@@ -34,7 +35,33 @@ const props = defineProps({
           </div>
 
           <!-- Right Side - Pricing -->
-          <div class="lg:text-right bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 lg:min-w-[280px]">
+          <div class="lg:text-right bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 lg:min-w-[320px] space-y-5">
+            <!-- Recommended Price -->
+            <div class="bg-[#FF385C]/10 dark:bg-[#FF385C]/20 rounded-xl p-4 border border-[#FF385C]/30">
+              <div class="flex items-center justify-end gap-2 mb-1">
+                <SparklesIcon class="w-5 h-5 text-[#FF385C]" />
+                <span class="text-3xl font-bold text-[#FF385C]">
+                  ${{ recommended_price }}
+                </span>
+              </div>
+              <p class="text-sm text-[#FF385C]/90 font-medium">
+                Recommended price
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                For {{ pricing_date }}
+              </p>
+            </div>
+
+            <!-- Base Price -->
+            <div>
+              <div class="flex items-center justify-end gap-2 mb-1">
+                <CurrencyDollarIcon class="w-5 h-5 text-gray-500" />
+                <span class="text-2xl font-semibold text-gray-900 dark:text-white">
+                  ${{ listing.base_price }}
+                </span>
+              </div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Base price</p>
+            </div>
             <div class="flex items-center justify-end gap-2 mb-2">
               <CurrencyDollarIcon class="w-6 h-6 text-[#FF385C]" />
               <span class="text-3xl font-semibold text-gray-900 dark:text-white">
@@ -58,16 +85,14 @@ const props = defineProps({
         <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
           Pricing Rules
         </h2>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            v-for="rule in listing.pricing_rules"
-            :key="rule.id"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md hover:border-[#FF385C] dark:hover:border-[#FF385C] transition-all duration-200 cursor-pointer group"
-          >
+          <div v-for="rule in listing.pricing_rules" :key="rule.id"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md hover:border-[#FF385C] dark:hover:border-[#FF385C] transition-all duration-200 cursor-pointer group">
             <!-- Rule Header -->
             <div class="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#FF385C] transition-colors">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#FF385C] transition-colors">
                 {{ rule.name }}
               </h3>
             </div>

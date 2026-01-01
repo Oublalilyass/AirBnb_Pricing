@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Listing extends Model
 {
@@ -41,5 +42,19 @@ class Listing extends Model
     public function recommendedPrices()
     {
         return $this->hasMany(RecommendedPrice::class);
+    }
+
+      public function getPricingRulesForPeriod(Carbon $start, Carbon $end)
+    {
+        return $this->pricingRules()
+            ->where(function ($q) use ($start, $end) {
+                $q->whereNull('start_date')
+                  ->orWhere('start_date', '<=', $end);
+            })
+            ->where(function ($q) use ($start, $end) {
+                $q->whereNull('end_date')
+                  ->orWhere('end_date', '>=', $start);
+            })
+            ->get();
     }
 }

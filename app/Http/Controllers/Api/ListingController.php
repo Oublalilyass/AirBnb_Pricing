@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\HasApiTokens;
 use Inertia\Inertia;
-
+use App\Services\Pricing\PricingEngine;
+use Carbon\Carbon;
 
 
 class ListingController extends Controller
@@ -35,12 +36,21 @@ class ListingController extends Controller
         return Inertia::render('listings/Form');
     }
 
-    public function show(Listing $listing)
+    public function show(Listing $listing, PricingEngine $pricingEngine)
     {
         // $this->authorize('view', $listing);
-        // return response()->json($listing->load('pricingRules'));
+
+        $listing->load('pricingRules');
+
+        // Default: today (can be replaced later by calendar date)
+        $date = Carbon::today();
+
+        $recommendedPrice = $pricingEngine->calculate($listing, $date);
+
         return Inertia::render('listings/Show', [
-            'listing' => $listing->load('pricingRules'),
+            'listing' => $listing,
+            'recommended_price' => $recommendedPrice,
+            'pricing_date' => $date->toDateString(),
         ]);
     }
 
