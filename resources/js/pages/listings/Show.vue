@@ -53,30 +53,27 @@ const props = defineProps({
             </div>
 
             <!-- Base Price -->
-            <div>
-              <div class="flex items-center justify-end gap-2 mb-1">
-                <CurrencyDollarIcon class="w-5 h-5 text-gray-500" />
-                <span class="text-2xl font-semibold text-gray-900 dark:text-white">
-                  ${{ listing.base_price }}
-                </span>
-              </div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Base price</p>
-            </div>
-            <div class="flex items-center justify-end gap-2 mb-2">
-              <CurrencyDollarIcon class="w-6 h-6 text-[#FF385C]" />
-              <span class="text-3xl font-semibold text-gray-900 dark:text-white">
-                ${{ listing.base_price }}
-              </span>
-            </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Base Price</p>
-            <div class="pt-3 border-t border-gray-200 dark:border-gray-600">
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                <span class="font-medium">Min:</span> ${{ listing.min_price }}
-                <span class="mx-2">•</span>
-                <span class="font-medium">Max:</span> ${{ listing.max_price }}
-              </p>
-            </div>
-          </div>
+     
+  <!-- Base Price -->
+  <div>
+    <div class="flex items-center justify-end gap-2 mb-1">
+      <CurrencyDollarIcon class="w-5 h-5 text-gray-500" />
+      <span class="text-2xl font-semibold text-gray-900 dark:text-white">
+        ${{ listing.base_price }}
+      </span>
+    </div>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Base price</p>
+  </div>
+
+  <!-- Min / Max -->
+  <div class="pt-3 border-t border-gray-200 dark:border-gray-600">
+    <p class="text-sm text-gray-600 dark:text-gray-300">
+      <span class="font-medium">Min:</span> ${{ listing.min_price }}
+      <span class="mx-2">•</span>
+      <span class="font-medium">Max:</span> ${{ listing.max_price }}
+    </p>
+  </div>
+</div>
         </div>
       </div>
 

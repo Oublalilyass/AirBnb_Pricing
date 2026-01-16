@@ -3,41 +3,45 @@
 namespace App\Services\Pricing;
 
 use App\Models\Listing;
+use App\Models\PricingRule;
 use Carbon\Carbon;
-use App\Services\Pricing\Rules\{
-    WeekendRule,
-    SeasonalRule
-};
 
 class PricingEngine
 {
-    protected array $rules;
-
-    public function __construct()
-    {
-        $this->rules = [
-            new WeekendRule(),
-            new SeasonalRule(),
-            // EventRule(),
-            // DemandRule(),
-        ];
-    }
-
     public function calculate(Listing $listing, Carbon $date): float
     {
-        $context = new PricingContext(
-            listing: $listing,
-            date: $date,
-            basePrice: $listing->base_price,
-            currentPrice: $listing->base_price
-        );
+        $price = (float) $listing->base_price;
 
-        foreach ($this->rules as $rule) {
-            if ($rule->applies($context)) {
-                $rule->apply($context);
+        foreach ($listing->pricingRules as $rule) {
+
+            // Weekend rule
+            if ($rule->rule_type === 'weekend' && $date->isWeekend()) {
+                $price = $this->applyRule($price, $rule);
+            }
+
+            // Date-based rules (season, event, demand)
+            if (
+                in_array($rule->rule_type, ['season', 'event', 'demand'])
+                && $rule->start_date
+                && $rule->end_date
+                && $date->between(
+                    Carbon::parse($rule->start_date),
+                    Carbon::parse($rule->end_date)
+                )
+            ) {
+                $price = $this->applyRule($price, $rule);
             }
         }
 
-        return round($context->currentPrice, 2);
+        return round($price, 2);
+    }
+
+    protected function applyRule(float $price, PricingRule $rule): float
+    {
+        if ($rule->value_type === 'percentage') {
+            return $price + ($price * $rule->value / 100);
+        }
+
+        return $price + $rule->value;
     }
 }

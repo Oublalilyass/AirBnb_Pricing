@@ -36,23 +36,28 @@ class ListingController extends Controller
         return Inertia::render('listings/Form');
     }
 
-    public function show(Listing $listing, PricingEngine $pricingEngine)
-    {
-        // $this->authorize('view', $listing);
+  public function show(Listing $listing, PricingEngine $pricingEngine)
+{
+    // Load pricing rules for the listing
+    $listing->load('pricingRules');
 
-        $listing->load('pricingRules');
+    // Choose the date for which to calculate the recommended price
+    // Currently using today, can later be dynamic (e.g., calendar selection)
+    $pricingDate = Carbon::today();
 
-        // Default: today (can be replaced later by calendar date)
-        $date = Carbon::today();
+    // Calculate the recommended price for this listing on the chosen date
+    // $recommendedPrice = $pricingEngine->calculate($listing, $pricingDate);
+    // dd($listing->pricingRules);
+    $recommendedPrice = $pricingEngine->calculate($listing, $pricingDate);
+    
+    // Send data to Inertia
+    return Inertia::render('listings/Show', [
+        'listing' => $listing,
+        'recommended_price' => $recommendedPrice,
+        'pricing_date' => $pricingDate->toDateString(),
+    ]);
+}
 
-        $recommendedPrice = $pricingEngine->calculate($listing, $date);
-
-        return Inertia::render('listings/Show', [
-            'listing' => $listing,
-            'recommended_price' => $recommendedPrice,
-            'pricing_date' => $date->toDateString(),
-        ]);
-    }
 
     public function store(Request $request)
     {
