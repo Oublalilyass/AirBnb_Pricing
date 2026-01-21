@@ -6,14 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\PricingRule;
 use App\Models\Listing;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PricingRuleController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-    }
-
     /**
      * List pricing rules for current user
      */
@@ -24,7 +20,7 @@ class PricingRuleController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return inertia('listings/PricingRules', [
+        return Inertia::render('PricingRules/Index', [
             'pricingRules' => $rules
         ]);
     }
