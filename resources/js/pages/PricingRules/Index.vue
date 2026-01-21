@@ -15,9 +15,14 @@ import {
 } from "@heroicons/vue/24/outline";
 import AppLayout from "@/layouts/AppLayout.vue";
 import { router, Link } from '@inertiajs/vue3';
+import CreateForm from './CreateForm.vue';
 
 const props = defineProps({
   pricingRules: {
+    type: Array,
+    default: () => [],
+  },
+  listings: {
     type: Array,
     default: () => [],
   },
@@ -31,6 +36,7 @@ const filters = ref({
 });
 
 const showFilters = ref(false);
+const showCreateForm = ref(false);
 
 // Check if filters are active
 const hasActiveFilters = computed(() => {
@@ -203,6 +209,7 @@ const goToDashboard = () => {
 
             <!-- Add Rule Button -->
             <button 
+              @click="showCreateForm = true"
               class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-semibold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-105 whitespace-nowrap"
             >
               <PlusIcon class="w-5 h-5" />
@@ -456,6 +463,7 @@ const goToDashboard = () => {
           </p>
           
           <button 
+            @click="showCreateForm = true"
             class="inline-flex items-center gap-3 px-10 py-5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-lg font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-105"
           >
             <PlusIcon class="w-6 h-6" />
@@ -465,6 +473,13 @@ const goToDashboard = () => {
 
       </div>
     </div>
+
+    <!-- Create Form Modal -->
+    <CreateForm 
+      v-if="showCreateForm"
+      :listings="listings"
+      @close="showCreateForm = false"
+    />
   </AppLayout>
 </template>
 
