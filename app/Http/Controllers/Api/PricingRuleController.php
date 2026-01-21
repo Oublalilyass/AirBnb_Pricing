@@ -35,8 +35,14 @@ class PricingRuleController extends Controller
      */
     public function show($id)
     {
-        $rule = PricingRule::where('id', $id)
-            ->where('user_id', auth()->id())
+        // Validate that ID is numeric to prevent 'create' string issue
+        if (!is_numeric($id)) {
+            abort(404);
+        }
+
+        $rule = PricingRule::with('listing')
+            ->where('id', $id)
+            ->whereHas('listing', fn($q) => $q->where('user_id', auth()->id()))
             ->firstOrFail();
 
         return response()->json($rule);
@@ -63,7 +69,6 @@ class PricingRuleController extends Controller
         }
 
         $rule = PricingRule::create([
-            'user_id'     => auth()->id(),
             'listing_id'  => $request->listing_id,
             'rule_type'   => $request->rule_type,
             'start_date'  => $request->start_date,
@@ -82,8 +87,13 @@ class PricingRuleController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Validate that ID is numeric to prevent 'create' string issue
+        if (!is_numeric($id)) {
+            abort(404);
+        }
+
         $rule = PricingRule::where('id', $id)
-            ->where('user_id', auth()->id())
+            ->whereHas('listing', fn($q) => $q->where('user_id', auth()->id()))
             ->firstOrFail();
 
         $request->validate([
@@ -119,8 +129,13 @@ class PricingRuleController extends Controller
      */
     public function destroy($id)
     {
+        // Validate that ID is numeric to prevent 'create' string issue
+        if (!is_numeric($id)) {
+            abort(404);
+        }
+
         $rule = PricingRule::where('id', $id)
-            ->where('user_id', auth()->id())
+            ->whereHas('listing', fn($q) => $q->where('user_id', auth()->id()))
             ->firstOrFail();
 
         $rule->delete();
