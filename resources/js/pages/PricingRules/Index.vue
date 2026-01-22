@@ -12,10 +12,10 @@ import {
   TagIcon,
   SunIcon,
   FireIcon,
+  PencilIcon,
 } from "@heroicons/vue/24/outline";
 import AppLayout from "@/layouts/AppLayout.vue";
 import { router, Link } from '@inertiajs/vue3';
-import CreateForm from './CreateForm.vue';
 
 const props = defineProps({
   pricingRules: {
@@ -36,7 +36,18 @@ const filters = ref({
 });
 
 const showFilters = ref(false);
-const showCreateForm = ref(false);
+const showEditModal = ref(false);
+const editingRule = ref(null);
+const isSubmitting = ref(false);
+const editForm = ref({
+  listing_id: null,
+  rule_type: '',
+  name: '',
+  start_date: '',
+  end_date: '',
+  value: '',
+  value_type: 'percentage',
+});
 
 // Check if filters are active
 const hasActiveFilters = computed(() => {
@@ -160,6 +171,56 @@ const resetFilters = () => {
 const goToDashboard = () => {
   router.visit('/dashboard');
 };
+
+// Edit functionality
+const openEditModal = (rule) => {
+  editingRule.value = rule;
+  editForm.value = {
+    listing_id: rule.listing_id || null,
+    rule_type: rule.rule_type || '',
+    name: rule.name || '',
+    start_date: rule.start_date || '',
+    end_date: rule.end_date || '',
+    value: rule.value || '',
+    value_type: rule.value_type || 'percentage',
+  };
+  showEditModal.value = true;
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editingRule.value = null;
+  editForm.value = {
+    listing_id: null,
+    rule_type: '',
+    name: '',
+    start_date: '',
+    end_date: '',
+    value: '',
+    value_type: 'percentage',
+  };
+};
+
+const updatePricingRule = () => {
+  if (!editingRule.value) return;
+  
+  isSubmitting.value = true;
+  
+  router.put(`/pricing-rules/${editingRule.value.id}`, editForm.value, {
+    preserveState: true,
+    preserveScroll: true,
+    onSuccess: () => {
+      closeEditModal();
+    },
+    onError: (errors) => {
+      console.error('Error updating pricing rule:', errors);
+      // Inertia will handle validation errors automatically
+    },
+    onFinish: () => {
+      isSubmitting.value = false;
+    },
+  });
+};
 </script>
 
 <template>
@@ -209,7 +270,6 @@ const goToDashboard = () => {
 
             <!-- Add Rule Button -->
             <button 
-              @click="showCreateForm = true"
               class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-semibold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-105 whitespace-nowrap"
             >
               <PlusIcon class="w-5 h-5" />
@@ -380,6 +440,14 @@ const goToDashboard = () => {
                     <span>{{ getRuleTypeLabel(rule.rule_type) }}</span>
                   </div>
                 </div>
+                <!-- Edit Button -->
+                <button
+                  @click="openEditModal(rule)"
+                  class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Edit rule"
+                >
+                  <PencilIcon class="w-5 h-5" />
+                </button>
               </div>
 
               <!-- Price Adjustment - Prominent Display -->
@@ -463,7 +531,6 @@ const goToDashboard = () => {
           </p>
           
           <button 
-            @click="showCreateForm = true"
             class="inline-flex items-center gap-3 px-10 py-5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-lg font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-105"
           >
             <PlusIcon class="w-6 h-6" />
@@ -474,12 +541,180 @@ const goToDashboard = () => {
       </div>
     </div>
 
-    <!-- Create Form Modal -->
-    <CreateForm 
-      v-if="showCreateForm"
-      :listings="listings"
-      @close="showCreateForm = false"
-    />
+    <!-- Edit Modal -->
+    <transition
+      enter-active-class="transition ease-out duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition ease-in duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showEditModal"
+        class="fixed inset-0 z-50 overflow-y-auto"
+        @click.self="closeEditModal"
+      >
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+        <!-- Modal -->
+        <div class="flex min-h-full items-center justify-center p-4">
+          <div
+            class="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-200 dark:border-gray-700"
+            @click.stop
+          >
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                  Edit Pricing Rule
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Update your pricing rule details
+                </p>
+              </div>
+              <button
+                @click="closeEditModal"
+                class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <XMarkIcon class="w-6 h-6" />
+              </button>
+            </div>
+
+            <!-- Form -->
+            <form @submit.prevent="updatePricingRule" class="p-6 space-y-6">
+              <!-- Rule Name -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Rule Name
+                </label>
+                <input
+                  v-model="editForm.name"
+                  type="text"
+                  placeholder="e.g., Summer Peak Season"
+                  class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+                />
+              </div>
+
+              <!-- Listing -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Listing
+                </label>
+                <select
+                  v-model="editForm.listing_id"
+                  class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 dark:text-white appearance-none cursor-pointer transition-all"
+                >
+                  <option :value="null">All Listings</option>
+                  <option
+                    v-for="listing in props.listings"
+                    :key="listing.id"
+                    :value="listing.id"
+                  >
+                    {{ listing.name }} {{ listing.location ? `- ${listing.location}` : '' }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Rule Type -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Rule Type
+                </label>
+                <select
+                  v-model="editForm.rule_type"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 dark:text-white appearance-none cursor-pointer transition-all"
+                >
+                  <option value="">Select type</option>
+                  <option value="seasonal">Seasonal</option>
+                  <option value="season">Season</option>
+                  <option value="event">Special Event</option>
+                  <option value="weekend">Weekend</option>
+                  <option value="demand">Demand Surge</option>
+                </select>
+              </div>
+
+              <!-- Value Type and Value -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Value Type
+                  </label>
+                  <select
+                    v-model="editForm.value_type"
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 dark:text-white appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Value {{ editForm.value_type === 'percentage' ? '(%)' : '($)' }}
+                  </label>
+                  <input
+                    v-model.number="editForm.value"
+                    type="number"
+                    step="0.01"
+                    required
+                    :placeholder="editForm.value_type === 'percentage' ? 'e.g., 15' : 'e.g., 50'"
+                    class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+                  />
+                </div>
+              </div>
+
+              <!-- Date Range -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    v-model="editForm.start_date"
+                    type="date"
+                    class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    v-model="editForm.end_date"
+                    type="date"
+                    :min="editForm.start_date"
+                    class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+                  />
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  @click="closeEditModal"
+                  class="px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                  :disabled="isSubmitting"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="isSubmitting"
+                >
+                  <span v-if="isSubmitting">Saving...</span>
+                  <span v-else>Save Changes</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
   </AppLayout>
 </template>
 

@@ -21,13 +21,12 @@ class PricingRuleController extends Controller
             ->get();
 
         $listings = Listing::where('user_id', auth()->id())
-            ->select('id', 'name', 'location')
             ->orderBy('name')
-            ->get();
+            ->get(['id', 'name', 'location']);
 
         return Inertia::render('PricingRules/Index', [
             'pricingRules' => $rules,
-            'listings' => $listings
+            'listings' => $listings,
         ]);
     }
 
@@ -56,39 +55,36 @@ class PricingRuleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'listing_id'   => 'required|exists:listings,id',
-            'rule_type'    => 'required|in:season,weekend,event,demand',
-            'name'         => 'required|string|max:255',
-            'value'        => 'required|numeric',
-            'value_type'   => 'required|in:percentage,fixed',
+            'listing_id'   => 'nullable|exists:listings,id',
+            'rule_type'    => 'required|string',
+            'name'         => 'nullable|string|max:255',
             'start_date'   => 'nullable|date',
             'end_date'     => 'nullable|date|after_or_equal:start_date',
+            'value'        => 'required|numeric',
+            'value_type'   => 'required|in:percentage,fixed',
         ]);
 
-        // Ensure listing belongs to current user
-        Listing::where('id', $request->listing_id)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        // Ensure listing belongs to current user (if specific listing)
+        if ($request->listing_id) {
+            Listing::where('id', $request->listing_id)
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
+        }
 
         $rule = PricingRule::create([
             'listing_id'  => $request->listing_id,
             'rule_type'   => $request->rule_type,
             'name'        => $request->name,
-            'value'       => $request->value,
-            'value_type'  => $request->value_type,
             'start_date'  => $request->start_date,
             'end_date'    => $request->end_date,
+            'value'       => $request->value,
+            'value_type'  => $request->value_type,
         ]);
 
-        // For Inertia requests, redirect back with success message
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Pricing rule created successfully',
-                'data'    => $rule->load('listing'),
-            ], 201);
-        }
-
-        return redirect()->back()->with('success', 'Pricing rule created successfully');
+        return response()->json([
+            'message' => 'Pricing rule created successfully',
+            'data'    => $rule,
+        ], 201);
     }
 
     /**
@@ -106,12 +102,12 @@ class PricingRuleController extends Controller
             ->firstOrFail();
 
         $request->validate([
-            'rule_type'   => 'sometimes|in:season,weekend,event,demand',
-            'name'        => 'sometimes|string|max:255',
-            'value'       => 'sometimes|numeric',
-            'value_type'  => 'sometimes|in:percentage,fixed',
+            'rule_type'   => 'sometimes|string',
+            'name'        => 'nullable|string|max:255',
             'start_date'  => 'nullable|date',
             'end_date'    => 'nullable|date|after_or_equal:start_date',
+            'value'       => 'sometimes|numeric',
+            'value_type'  => 'sometimes|in:percentage,fixed',
         ]);
 
         // Prevent updating listing_id to one that doesn't belong to user
@@ -125,16 +121,21 @@ class PricingRuleController extends Controller
             'listing_id',
             'rule_type',
             'name',
-            'value',
-            'value_type',
             'start_date',
-            'end_date'
+            'end_date',
+            'value',
+            'value_type'
         ]));
 
-        return response()->json([
-            'message' => 'Pricing rule updated successfully',
-            'data'    => $rule,
-        ]);
+        // Return JSON for API calls, or redirect for Inertia
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Pricing rule updated successfully',
+                'data'    => $rule->fresh(['listing']),
+            ]);
+        }
+
+        return back()->with('success', 'Pricing rule updated successfully');
     }
 
     /**
